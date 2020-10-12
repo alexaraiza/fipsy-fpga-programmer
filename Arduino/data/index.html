@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fipsy FPGA programmer</title>
+    <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="styles.css" type="text/css">
+
+  </head>
+  <body mode="light">
+    <h1>Fipsy FPGA programmer</h1>
+    <div class="container">
+      <h2>Fipsy FPGA programmer</h2>
+
+      <div class="wrapper">
+        <div id="darkButton">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="100%" height="100%"><path d="M 15.66 5.93 L 10 0.27 L 4.34 5.93 c -3.12 3.12 -3.12 8.19 0 11.31 C 5.9 18.8 7.95 19.58 10 19.58 c 2.05 0 4.1 -0.78 5.66 -2.34 c 3.12 -3.12 3.12 -8.19 0 -11.31 z M 10 17.59 c -1.6 0 -3.11 -0.62 -4.24 -1.76 C 4.62 14.69 4 13.19 4 11.59 s 0.62 -3.11 1.76 -4.24 L 10 3.1 v 14.49 z"/></svg>
+        </div>
+        
+        <h3>Choose a file to upload</h3>
+      </div>
+
+      <div class="file">
+        <div class="file__choose">
+          <button class="button" onclick="chooseFile()" id="chooseFileButton">Choose File</button>
+          <div class="file__info">
+            <span class="status info" id="fileName"></span>
+            <span class="status failure" id="fileStatus"></span>
+          </div>
+        </div>
+        
+        <div class="file__upload action">
+          <form method="post" enctype="multipart/form-data" id="uploadForm">
+            <input name="file" type="file" accept=".jed" hidden="" id="JEDECfile">
+            <input class="button" disabled="" name="submit" type="submit" value="Upload File" id="uploadButton">
+          </form>
+          <span class="status" id="uploadStatus"></span>
+        </div>
+      </div>
+
+      <h3>Select a file to program device</h3>
+      <div class="list">
+        <table id="fileTable">
+            <tr>
+              <th class="select-cell"></th>
+              <th class="name-cell">Name</th>
+              <th class="size-cell" id="sizeHeader">Size</th>
+              <th id="removeHeader"></th>
+            </tr>
+
+            <tr>
+              <td class="select-cell"></td>
+              <td class="name-cell" id="listStatus">Loading file list...</td>
+            </tr>
+        </table>
+      </div>
+
+      <div class="other-actions">
+        <div class="action">
+          <button class="button" onclick="program(selectedRow.cells[1].innerHTML)" disabled="" id="programButton">Program device</button>
+          <span class="status" id="programStatus"></span>
+        </div>
+    
+        <div class="action">
+          <button class="button" onclick="erase()" id="eraseButton">Erase device</button>
+          <span class="status" id="eraseStatus"></span>
+        </div>
+  
+        <div class="action">
+          <button class="button" onclick="checkID()" id="checkIDButton">Check device ID</button>
+          <span class="status" id="checkIDStatus"></span>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script src="main.js" type="text/javascript"></script>
+</html>

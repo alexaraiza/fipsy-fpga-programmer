@@ -1,0 +1,525 @@
+/*
+TABLE OF CONTENTS
+    L1. PORTRAIT ORIENTATION (MOBILE DEVICES)
+        1. IMPORTS
+        2. BODY
+        3. MAIN CONTAINER
+        4. FIRST LINE
+        5. HEADINGS
+        6. ACTIONS
+        7. BUTTONS
+        8. STATUS MESSAGES
+        9. FILE UPLOAD
+        10. FILE LIST
+
+    L2. LANDSCAPE ORIENTATION (DESKTOP DEVICES)
+        2. BODY
+        3. MAIN CONTAINER
+        4. FIRST LINE
+        5. HEADINGS
+        6. ACTIONS
+        7. BUTTONS
+        8. STATUS MESSAGES
+        9. FILE UPLOAD
+        10. FILE LIST
+
+    L3. WIDE LANDSCAPE ORIENTATION (EXTREME CASE)
+        2. BODY
+        3. MAIN CONTAINER
+        4. FIRST LINE
+        5. HEADINGS
+        6. ACTIONS
+        7. BUTTONS
+        8. STATUS MESSAGES
+        9. FILE UPLOAD
+        10. FILE LIST
+*/
+
+
+
+/* L1. PORTRAIT ORIENTATION (MOBILE DEVICES) */
+
+/* 1. IMPORTS */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto:wght@300&display=swap');
+
+/* 2. BODY */
+body {
+    cursor: default;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    background-color: var(--container-color);
+    color: var(--text-color);
+    font-family: 'Roboto', sans-serif;
+    font-size: min(4vw, 2vh);
+    --primary-color: #00bf7f;
+    --container-color: #ffefdf;
+    --background-color: #ffffff;
+    --text-color: #000000;
+    --disabled-button-color: #bfbfbf;
+    --list-border-color: #dfdfdf;
+    --remove-button-color: #bfbfbf;
+    --remove-button-disabled-color: #dfdfdf;
+    --row-hover-color: #efefef;
+    --row-select-color: #bfefdf;
+}
+
+body[mode="dark"] {
+    --primary-color: #008f5f;
+    --container-color: #001f2f;
+    --background-color: #000000;
+    --text-color: #ffffff;
+    --disabled-button-color: #8f8f8f;
+    --list-border-color: #5f5f5f;
+    --remove-button-color: #8f8f8f;
+    --remove-button-disabled-color: #5f5f5f;
+    --row-hover-color: #3f3f3f;
+    --row-select-color: #005f3f;
+}
+
+/* 3. MAIN CONTAINER */
+.container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--container-color);
+    height: calc(100vh - 96px);
+    padding: 5vw;
+}
+
+/* 4. FIRST LINE */
+.wrapper{
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+}
+
+#darkButton{
+    cursor: pointer;
+    margin-top: min(2.8vw, 1.4vh);
+    height: min(4.8vw, 2.4vh);
+}
+
+/* 5. HEADINGS */
+h1 {
+    display: none;
+}
+
+h2 {
+    font-family: 'Open Sans', sans-serif;
+    font-size: min(6.5vw, 6vh);
+    height: 8vw;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0 0 min(2vw, 1vh) 0;
+}
+
+h3 {
+    font-family: 'Open Sans', sans-serif;
+    font-size: min(4.2vw, 2.1vh);
+    margin: min(2vw, 1vh) 0;
+}
+
+/* 6. ACTIONS */
+.action{
+    min-height: min(19.2vw, 9.6vh);
+    text-align: center;
+}
+
+/* 7. BUTTONS */
+.button{
+    background: var(--primary-color);
+    border: none;
+    border-radius: 0.8em;
+    font-family: 'Open Sans', sans-serif;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: min(4.4vw, 2.2vh);
+    text-transform: uppercase;
+    height: min(11vw, 5.5vh);
+    width: min(50vw, 25vh);
+    padding: 0;
+}
+
+.button:disabled{
+    background: var(--disabled-button-color);
+    cursor: default;
+}
+
+/* 8. STATUS MESSAGES */
+.status{
+    display: block;
+    font-size: min(3.6vw, 1.8vh);
+    margin-top: min(1vw, 0.5vh);
+    overflow-wrap: anywhere;
+}
+
+.info{
+    font-size: min(4.4vw, 2.2vh);
+    min-height: min(5.2vw, 2.6vh);
+}
+
+.success{
+    color: #00bf7f;
+}
+
+.failure{
+    color: #df0000;
+}
+
+/* 9. FILE UPLOAD */
+.file{
+    text-align: center;
+}
+
+.file__choose{
+    margin-bottom: min(2.4vw, 1.2vh);
+}
+
+/* 10. FILE LIST */
+table {
+    background: var(--background-color);
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th {
+    height: min(7.2vw, 3.6vh);
+    background: var(--primary-color);
+    color: #ffffff;
+    text-align: left;
+    padding: 0;
+}
+
+td {
+    padding: 0;
+}
+
+input[type="radio"] {
+    cursor: pointer;
+    margin: auto;
+}
+
+.list{
+    display: flex;
+    flex-grow: 1;
+    min-height: 18vh;
+    width: 100%;
+    overflow-y: auto;
+    margin-bottom: min(3.2vw, 1.6vh);
+}
+
+#listStatus{
+    height: min(7.2vw, 3.6vh);
+}
+
+.list__row{
+    border-top: 1px solid var(--list-border-color);
+    transition: opacity 1s;
+}
+
+.list__row:hover{
+    cursor: pointer;
+}
+
+.selected-row{
+    background: var(--row-select-color);
+}
+
+.select-cell{
+    width: 8vw;
+    text-align: center;
+}
+
+.name-cell{
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.size-cell{
+    display: none;
+}
+
+.remove-cell{
+    padding: min(1.6vw, 0.8vh);
+    text-align: right;
+}
+
+.remove-button{
+    background: var(--remove-button-color);
+    font-family: 'Roboto', sans-serif;
+    font-size: min(4vw, 2vh);
+    text-transform: none;
+}
+
+.remove-cell, .remove-button{
+    height: min(9.6vw, 4.8vh);
+}
+
+.remove-cell, .remove-button, #removeHeader{
+    width: min(30vw, 15vh);
+}
+
+.remove-button:disabled{
+    background: var(--remove-button-disabled-color);
+}
+
+
+
+/* L2. LANDSCAPE ORIENTATION (DESKTOP DEVICES) */
+
+@media (orientation: landscape) {
+    /* 2. BODY */
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: var(--background-color);
+        font-size: max(1vw, 2vh);
+    }
+
+    /* 3. MAIN CONTAINER */
+    .container{
+        border-radius: max(2.5vw, 5vh);
+        height: 66vh;
+        width: 50vw;
+        min-width: 80vh;
+        padding: max(2vw, 4vh) max(2.5vw, 5vh);
+    }
+
+    /* 4. FIRST LINE */
+    #darkButton{
+        margin-top: max(0.2vw, 0.4vh);
+        height: max(1.2vw, 2.4vh);
+    }
+
+    /* 5. HEADINGS */
+    h1 {
+        display: block;
+        font-family: 'Open Sans', sans-serif;
+        font-size: min(6.5vw, 6vh);
+        color: var(--primary-color);
+        text-transform: uppercase;
+        text-align: center;
+        margin: 4vh 0;
+    }
+
+    h2 {
+        display: none;
+    }
+
+    h3 {
+        font-size: max(1.05vw, 2.1vh);
+        margin: 0 0 max(0.5vw, 1vh) 0;
+    }
+
+    /* 6. ACTIONS */
+    .action{
+        min-height: max(5.2vw, 10.4vh);
+        width: 12.5vw;
+        min-width: 25vh;
+    }
+
+    .other-actions{
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+    }
+
+    /* 7. BUTTONS */
+    .button{
+        font-size: max(1.1vw, 2.2vh);
+        height: 2.75vw;
+        min-height: 5.5vh;
+        width: 12.5vw;
+        min-width: 25vh;
+    }
+
+    /* 8. STATUS MESSAGES */
+    .status{
+        font-size: max(0.9vw, 1.8vh);
+        margin-top: max(0.25vw, 0.5vh);
+    }
+    
+    .info{
+        font-size: max(1.1vw, 2.2vh);
+        min-height: max(1.3vw, 2.6vh);
+    }
+
+    /* 9. FILE UPLOAD */
+    .file{
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .file__choose{
+        display: flex;
+    }
+
+    .file__info{
+        text-align: left;
+        padding: 0 max(0.6vw, 1.2vh);
+    }
+
+    #fileName{
+        margin-top: max(0.75vw, 1.5vh);
+    }
+
+    .file__upload{
+        margin: 0;
+    }
+
+    /* 10. FILE LIST */
+    th {
+        height: max(1.8vw, 3.6vh);
+    }
+
+    .list{
+        min-height: 18vh;
+        margin-bottom: max(0.8vw, 1.6vh);
+    }
+
+    #listStatus{
+        height: max(1.8vw, 3.6vh);
+    }
+
+    .select-cell{
+        width: max(4vw, 8vh);
+    }
+
+    .size-cell{
+        display: revert;
+        width: max(7.5vw, 15vh);
+        padding: 0 max(0.4vw, 0.8vh);
+        text-align: right;
+    }
+
+    #sizeHeader{
+        text-align: left;
+    }
+
+    .remove-cell{
+        padding: max(0.4vw, 0.8vh);
+    }
+
+    .remove-button{
+        font-size: max(1vw, 2vh);
+    }
+
+    .remove-cell, .remove-button{
+        height: 2.4vw;
+        min-height: 4.8vh;
+    }
+
+    .remove-cell, .remove-button, #removeHeader{
+        width: 7.5vw;
+        min-width: 15vh;
+    }
+    
+    .remove-button:disabled{
+        background: var(--remove-button-disabled-color);
+    }
+}
+
+
+
+/* L3. WIDE LANDSCAPE ORIENTATION (EXTREME CASE) */
+
+@media (min-aspect-ratio: 3) {
+    /* 2. BODY */
+    body {
+        font-size: 3vh;
+    }
+
+    /* 3. MAIN CONTAINER */
+    .container{
+        border-radius: 7.5vh;
+        width: 150vh;
+        padding: 6vh 7.5vh;
+    }
+
+    /* 4. FIRST LINE */
+    #darkButton{
+        margin-top: 0.6vh;
+        height: 3.6vh;
+    }
+
+    /* 5. HEADINGS */
+    h3 {
+        font-size: 3.15vh;
+        margin: 0 0 1.5vh 0;
+    }
+
+    /* 6. ACTIONS */
+    .action{
+        min-height: 15.6vh;
+        width: 37.5vh;
+    }
+
+    /* 7. BUTTONS */
+    .button{
+        font-size: 3.3vh;
+        height: 8.25vh;
+        width: 37.5vh;
+    }
+
+    /* 8. STATUS MESSAGES */
+    .status{
+        font-size: 2.7vh;
+        margin-top: 0.75vh;
+    }
+    
+    .info{
+        font-size: 3.3vh;
+        min-height: 3.9vh;
+    }
+
+    /* 9. FILE UPLOAD */
+    .file__info{
+        padding: 0 1.8vh;
+    }
+
+    #fileName{
+        margin-top: 2.25vh;
+    }
+
+    /* 10. FILE LIST */
+    th {
+        height: 5.4vh;
+    }
+
+    .list{
+        margin-bottom: 2.4vh;
+    }
+
+    #listStatus{
+        height: 5.4vh;
+    }
+
+    .select-cell{
+        width: 12vh;
+    }
+
+    .size-cell{
+        width: 22.5vh;
+        padding: 0 1.2vh;
+    }
+
+    .remove-cell{
+        padding: 1.2vh;
+    }
+
+    .remove-button{
+        font-size: 3vh;
+    }
+
+    .remove-cell, .remove-button{
+        height: 7.2vh;
+    }
+
+    .remove-cell, .remove-button, #removeHeader{
+        width: 22.5vh;
+    }
+}
