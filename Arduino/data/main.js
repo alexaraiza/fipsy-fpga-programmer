@@ -1,11 +1,18 @@
-/* Initialize selectedRow and lastStatus, which keep track of the last row the user selected and the last status displayed on screen
- */
-var selectedRow = null;
-var lastStatus = null;
+var selectedRow = null; // selected row from file list
+var lastStatus = null; // last status displayed on screen
 
-// On page load
-document.addEventListener("DOMContentLoaded", function(){
-  // Reset buttons, upload form, selected row and last displayed status
+// Files not to be checked before upload
+const doNotCheck = ["index.html", "styles.css", "main.js", "favicon.ico"]
+
+
+
+
+/* On page load
+Reset user interface (buttons, form, selected row and last status)
+Retrieve file list from server and display it */
+document.addEventListener("DOMContentLoaded", function() {
+
+  // Reset user interface
   uploadButton.disabled = true;
   programButton.disabled = true;
   uploadForm.reset();
@@ -16,17 +23,14 @@ document.addEventListener("DOMContentLoaded", function(){
   const xhr = new XMLHttpRequest();
   const url = "/list";
 
-  xhr.onreadystatechange = function(){
-    // If response is successful
-    if (this.readyState === 4 && this.status === 200){
-      // Parse list to get array of files
+  xhr.onreadystatechange = function() {
+    if (this.readyState === 4 && this.status === 200) {
       array = JSON.parse(this.responseText);
-      if (array.length === 0){
+      if (array.length === 0) {
         listStatus.innerHTML = "File list is empty";
-      }
-      else{
+      } else {
         fileTable.deleteRow(-1); // delete "Loading file list..."
-        for (const file of array){
+        for (const file of array) {
           addToList(file.name, file.size);
         }
       }
@@ -37,84 +41,71 @@ document.addEventListener("DOMContentLoaded", function(){
   xhr.send();
 });
 
-// On choosing a file to upload
-uploadForm.addEventListener("change", function(){
+
+/* On choosing a file to upload
+Display file name
+Check file (client-side validation) */
+uploadForm.addEventListener("change", function() {
   const file = JEDECfile.files[0];
   uploadButton.disabled = true;
-  fileName.innerHTML = file.name; // display file name
-  fileStatus.innerHTML = ""; // reset file information
+  fileName.innerHTML = file.name;
+  fileStatus.innerHTML = "";
 
-  // If file is index.html or favicon.ico, allow upload
-  if (file.name === "index.html" || file.name === "favicon.ico"){
-    uploadButton.disabled = false;
-    return;
-  }
-
-  // If file is not JEDEC
-  if (!file.name.endsWith(".jed")){
-    fileStatus.innerHTML = "File format must be JEDEC (.jed)";
-    return;
-  }
-
-  // If file name is too long
-  if (file.name.length > 30){
-    fileStatus.innerHTML = "File name cannot be longer than 30 characters";
-    return;
-  }
-
-  // checkFile will allow the file to be uploaded or not
+  // Perform file check
   checkFile(file, fileStatus, uploadButton)
 });
 
-// On file upload
-uploadForm.addEventListener("submit", function(e){
+
+/* On clicking the upload button
+Upload file to server, display upload status and add file to file list
+NO SERVER-SIDE VALIDATION IMPLEMENTED
+(User could upload "invalid" files) */
+uploadForm.addEventListener("submit", function(e) {
   uploadButton.disabled = true;
   uploadButton.value = "Uploading...";
-  if (lastStatus){
-    lastStatus.innerHTML = ""; // reset last status
+  if (lastStatus) {
+    lastStatus.innerHTML = "";
   }
   const filename = JEDECfile.files[0].name;
   const filesize = JEDECfile.files[0].size;
 
-  // Prevent default behavior
   e.preventDefault();
 
   // Send AJAX request to upload file
   const xhr = new XMLHttpRequest();
   const url = "/upload";
-  
-  xhr.onreadystatechange = function(){
-    if (this.readyState === 4){ // When response is ready
-      // If response is successful
-      if (this.status === 201){
+
+  xhr.onreadystatechange = function() {
+    if (this.readyState === 4) {
+
+      // Status is success or failure
+      if (this.status === 201) {
         uploadStatus.setAttribute("class", "status success");
         uploadStatus.innerHTML = "Uploaded " + filename;
 
         // Update JEDEC file in list
-        if (currentFileRow){
+        if (currentFileRow) {
           currentFileRow.cells[2].innerHTML = filesize + " B";
         }
 
         // Append JEDEC file to list
-        else if (filename.endsWith(".jed")){
-          if (fileTable.children[0].children[1].cells[1].innerHTML === "File list is empty"){
+        else if (filename.endsWith(".jed")) {
+          if (fileTable.children[0].children[1].cells[1].innerHTML === "File list is empty") {
             fileTable.deleteRow(-1);
           }
           addToList(filename, filesize);
         }
-      }
-
-      // If response failed
-      else{
+      } else {
         uploadStatus.setAttribute("class", "status failure");
         uploadStatus.innerHTML = "Upload failed";
       }
-      
+
       lastStatus = uploadStatus;
 
-      // Enable upload button if file is correct
       uploadButton.value = "Upload File";
-      if (fileStatus.innerHTML === ""){
+
+      // Enable upload button if chosen file passed check (checkFile)
+      if (fileStatus.innerHTML === "") {
         uploadButton.disabled = false;
       }
     }
@@ -125,141 +116,25 @@ uploadForm.addEventListener("submit", function(e){
 
   // Check if uploaded file is in list (overwriting)
   let currentFileRow = null;
-  for (const row of fileTable.children[0].children){
-    if (row.cells[1].innerHTML === filename){
+  for (const row of fileTable.children[0].children) {
+    if (row.cells[1].innerHTML === filename) {
       currentFileRow = row;
       break;
     }
   }
 });
 
-darkButton.addEventListener("click", function(){
-  if (document.body.attributes.mode.nodeValue === "light"){
-    document.body.setAttribute("mode", "dark");
-  }
-  else{
-    document.body.setAttribute("mode", "light");
-  }
-});
 
-function checkFile(file, fileStatus, uploadButton){
-  const reader = new FileReader();
-  reader.readAsText(file);
-  reader.onload = function(){
-    const file = reader.result;
-    var i = 0;
-
-    // Look for STX
-    while (file.charCodeAt(i) != 2 && !isNaN(file.charCodeAt(i))){
-      i++;
-    }
-    // If STX is not found
-    if (i >= file.length){
-      fileStatus.innerHTML = "File check failed: could not find starting STX";
-      return;
-    }
-    const stx = i;
-
-    // Look for QF
-    while ((file.charCodeAt(i-3) != 10 || file.charCodeAt(i-2) != 81 || file.charCodeAt(i-1) != 70) && !isNaN(file.charCodeAt(i))){
-      i++;
-    }
-    if (i >= file.length){
-      fileStatus.innerHTML = "File check failed: could not find 'Q' and qualifier 'F'";
-      return;
-    }
-    
-    // Count address digits
-    var addressDigits = 0;
-    while (file.charCodeAt(i) != 42){
-      addressDigits++;
-      i++;
-    }
-
-    i++;
-    // Check that we're not at the end of the file
-    if (isNaN(file.charCodeAt(i))){
-      fileStatus.innerHTML = "File check failed: address delimiter is at end of file";
-      return;
-    }
-
-    // Look for 'E' for feature row
-    while ((file.charCodeAt(i-2) != 10 || file.charCodeAt(i-1) != 69) && !isNaN(file.charCodeAt(i))){
-      i++;
-    }
-    if (i >= file.length){
-      fileStatus.innerHTML = "File check failed: could not find 'E' for feature row";
-      return;
-    }
-
-    var featurerow = 0; // feature row bit position
-    while (file.charCodeAt(i) == 48 || file.charCodeAt(i) == 49){
-      featurerow++;
-      i++;
-    }
-    if (featurerow != 64){
-      fileStatus.innerHTML = "File check failed: feature row is not 8 bytes long";
-      return;
-    }
-
-    // Go to next line
-    while (file.charCodeAt(i) != 48 && file.charCodeAt(i) != 49){
-      i++;
-    }
-    var feabits = 0; // feabit position
-    while (file.charCodeAt(i) == 48 || file.charCodeAt(i) == 49){
-      if (feabits == 9 && file.charCodeAt(i) == 49){
-        fileStatus.innerHTML = "File check failed: SPI port is disabled";
-        return;
-      }
-      feabits++;
-      i++;
-    }
-    if (feabits != 16){
-      fileStatus.innerHTML = "File check failed: feabits is not 2 bytes long";
-      return;
-    }
-
-    // Go back to STX
-    i = stx;
-
-    // Look for 'L'
-    while ((file.charCodeAt(i-2) != 10 || file.charCodeAt(i-1) != 76) && !isNaN(file.charCodeAt(i))){
-      i++;
-    }
-    if (i >= file.length){
-      fileStatus.innerHTML = "File check failed: could not find 'L' for fuse table";
-      return;
-    }
-
-    // Check that address digits are 0
-    const limit = i + addressDigits;
-    for (i; i < limit; i++){
-      if (file.charCodeAt(i) != 48){
-        fileStatus.innerHTML = "File check failed: fuse table address is not 0";
-        return;
-      }
-    }
-
-    // File check successful
-    if (uploadButton.value !== "Uploading..."){
-      uploadButton.disabled = false;
-    }
-  }
-}
-
-// On remove file
-function remove(filename){
-  // Get button and row elements
+/* On clicking the "Remove file" button
+Remove file from server and from the file list */
+function remove(filename) {
   removeButton = document.getElementById("remove" + filename);
   row = removeButton.parentElement.parentElement;
 
   removeButton.disabled = true;
   removeButton.innerHTML = "Removing...";
 
-  /* Reset last status (remove does not display a status: if it succeeds, the row disappears; if not, it resets)
-   */
-  if (lastStatus){
+  if (lastStatus) {
     lastStatus.innerHTML = "";
     lastStatus = null;
   }
@@ -268,19 +143,13 @@ function remove(filename){
   const xhr = new XMLHttpRequest();
   const url = "/remove?filename=" + filename;
 
-  xhr.onreadystatechange = function(){
-    if (this.readyState === 4){ // When response is ready
-      // If response is successful
-      if (this.status === 200){
-        if (selectedRow === row){
-          programButton.disabled = true;
-          selectedRow = null;
-        }
+  xhr.onreadystatechange = function() {
+    if (this.readyState === 4) {
+      
+      // Status is success or failure
+      if (this.status === 200) {
         removeFromList(row);
-      }
-
-      // If response failed
-      else{
+      } else {
         removeButton.disabled = false;
         removeButton.innerHTML = "Remove file";
       }
@@ -291,29 +160,30 @@ function remove(filename){
   xhr.send();
 }
 
-// On program command
-function program(filename){
+
+/* On clicking the "Program device" button
+Program device and display program status */
+function program(filename) {
   programButton.disabled = true;
   programButton.innerHTML = "Programming...";
-  if (lastStatus){
+  if (lastStatus) {
     lastStatus.innerHTML = "";
   }
-      
+
   // Send AJAX request to program device
   const xhr = new XMLHttpRequest();
   const url = "/program?filename=" + filename;
-      
-  xhr.onreadystatechange = function(){
-    if (this.readyState === 4){ // When response is ready
+
+  xhr.onreadystatechange = function() {
+    if (this.readyState === 4) {
+
+      // Reset program button
       programButton.innerHTML = "Program device";
 
-      // If response is successful
-      if (this.status === 200){
+      // Status is success or failure
+      if (this.status === 200) {
         programStatus.setAttribute("class", "status success");
-      }
-
-      // If response failed
-      else{
+      } else {
         programStatus.setAttribute("class", "status failure");
       }
 
@@ -321,9 +191,8 @@ function program(filename){
       programStatus.innerHTML = this.responseText;
       lastStatus = programStatus;
 
-      /* If a file is selected (always the case, except when the program command was run immediately after the command to remove the same file, not giving it enough time to receive a response)
-       */
-      if (selectedRow){
+      // Enable program button
+      if (selectedRow) {
         programButton.disabled = false;
       }
     }
@@ -333,11 +202,13 @@ function program(filename){
   xhr.send();
 }
 
-// On erase command
-function erase(){
+
+/* On clicking the "Erase device" button
+Erase device and display erase status */
+function erase() {
   eraseButton.disabled = true;
   eraseButton.innerHTML = "Erasing...";
-  if (lastStatus){
+  if (lastStatus) {
     lastStatus.innerHTML = "";
   }
 
@@ -345,20 +216,21 @@ function erase(){
   const xhr = new XMLHttpRequest();
   const url = "/erase";
 
-  xhr.onreadystatechange = function(){
-    if (this.readyState === 4){ // When response is ready
+  xhr.onreadystatechange = function() {
+    if (this.readyState === 4) {
+
+      // Reset erase button
       eraseButton.disabled = false;
       eraseButton.innerHTML = "Erase device";
 
-      // If response was successful
-      if (this.status === 200){
+      // Status is success or failure
+      if (this.status === 200) {
         eraseStatus.setAttribute("class", "status success");
-      }
-
-      // If response failed
-      else{
+      } else {
         eraseStatus.setAttribute("class", "status failure");
       }
+
+      // Display status
       eraseStatus.innerHTML = this.responseText;
       lastStatus = eraseStatus;
     }
@@ -368,11 +240,13 @@ function erase(){
   xhr.send();
 }
 
-// On check ID command
-function checkID(){
+
+/* On clicking the "Check device ID" button
+Check device ID and display it */
+function checkID() {
   checkIDButton.disabled = true;
   checkIDButton.innerHTML = "Checking...";
-  if (lastStatus){
+  if (lastStatus) {
     lastStatus.innerHTML = "";
   }
 
@@ -380,19 +254,18 @@ function checkID(){
   const xhr = new XMLHttpRequest();
   const url = "/id";
 
-  xhr.onreadystatechange = function(){
-    if (this.readyState === 4){ // When response is ready
+  xhr.onreadystatechange = function() {
+    if (this.readyState === 4) {
+
+      // Reset check ID button
       checkIDButton.disabled = false;
       checkIDButton.innerHTML = "Check device ID";
 
-      // If response is successful
-      if (this.status === 200){
+      // Status is success or failure
+      if (this.status === 200) {
         checkIDStatus.setAttribute("class", "status info");
         lastStatus = null;
-      }
-
-      // If response failed
-      else{
+      } else {
         checkIDStatus.setAttribute("class", "status failure");
         lastStatus = checkIDStatus;
       }
@@ -406,59 +279,31 @@ function checkID(){
   xhr.send();
 }
 
-function chooseFile(){
-  JEDECfile.click();
-}
 
-// On row select (when a row is clicked)
-function selectRow(e){
-  // If the remove button was clicked
-  if (e.target.className === "remove-button"){
-    return;
+/* On clicking the dark button
+Switch between light and dark mode */
+darkButton.addEventListener("click", function() {
+  if (document.body.attributes.mode.nodeValue === "light") {
+    document.body.setAttribute("mode", "dark");
+  } else {
+    document.body.setAttribute("mode", "light");
   }
+});
 
-  // Deselect previously selected row
-  if (selectedRow){
-    selectedRow.cells[0].children[0].checked = false;
-    selectedRow.setAttribute("class", "list__row");
-  }
 
-  // Enable program button
-  else{
-    programButton.disabled = false;
-  }
 
-  if (lastStatus){
-    lastStatus.innerHTML = "";
-  }
-  lastStatus = null;
-
-  // Select row
-  this.cells[0].children[0].checked = true;
-  this.removeAttribute("style");
-  this.setAttribute("class", "list__row selected-row");
-  selectedRow = this;
-}
-
-// On mouse enter
-function enterRow(){
-  if (selectedRow !== this){
-    this.style.background = getComputedStyle(this).getPropertyValue("--row-hover-color");
-  }
-}
-
-// On mouse leave
-function leaveRow(){
-  if (selectedRow !== this){
-    this.removeAttribute("style");
-  }
-}
 
 // Add a file to the list given its name and size
-function addToList(name, size){
+function addToList(name, size) {
+  // Create row
   const row = fileTable.insertRow(-1);
   row.setAttribute("class", "list__row");
-  
+
+  row.addEventListener("click", selectRow);
+  row.addEventListener("mouseenter", enterRow);
+  row.addEventListener("mouseleave", leaveRow);
+
+  // Create row cells
   const selectCell = row.insertCell(0);
   selectCell.setAttribute("class", "select-cell");
   const nameCell = row.insertCell(1);
@@ -467,26 +312,29 @@ function addToList(name, size){
   sizeCell.setAttribute("class", "size-cell");
   const removeCell = row.insertCell(3);
   removeCell.setAttribute("class", "remove-cell");
-  
+
   selectCell.innerHTML = "<input type=\"radio\">";
   nameCell.innerHTML = name;
   sizeCell.innerHTML = size + " B";
-  // Generate a remove button
   removeCell.innerHTML = "<button class=\"button remove-button\" onclick=\"remove('" + name + "')\" id=\"remove" + name + "\">Remove file</button>";
-  
-  row.addEventListener("click", selectRow); // listen for row selection
-  row.addEventListener("mouseenter", enterRow); // listen for mouse enter
-  row.addEventListener("mouseleave", leaveRow); // listen for mouse leave
 }
 
+
 // Remove a file from the list given its row
-function removeFromList(row){
-  // Row takes 1s to fade out (CSS transition)
+function removeFromList(row) {
   row.style.opacity = 0;
-  setTimeout(function(){
+
+  // Row takes 1s to fade out (CSS transition)
+  setTimeout(function() {
     row.remove();
+
+    if (selectedRow === row) {
+      programButton.disabled = true;
+      selectedRow = null;
+    }
+
     // If there are no files in the list, display "File list is empty"
-    if (fileTable.rows.length === 1){
+    if (fileTable.rows.length === 1) {
       const row = fileTable.insertRow(-1);
       const select = row.insertCell(0);
       select.setAttribute("class", "select-cell");
@@ -495,4 +343,182 @@ function removeFromList(row){
       status.innerHTML = "File list is empty";
     }
   }, 1000);
+}
+
+
+// On clicking on a row
+function selectRow(e) {
+  // If the remove button was clicked
+  if (e.target.className === "button remove-button") {
+    return;
+  }
+
+  // Deselect previously selected row
+  if (selectedRow) {
+    selectedRow.cells[0].children[0].checked = false;
+    selectedRow.setAttribute("class", "list__row");
+  }
+
+  // Enable program button
+  else {
+    programButton.disabled = false;
+  }
+
+  if (lastStatus) {
+    lastStatus.innerHTML = "";
+  }
+  lastStatus = null;
+
+  // Select row
+  this.cells[0].children[0].checked = true;
+  this.style.background = "";
+  this.setAttribute("class", "list__row selected-row");
+  selectedRow = this;
+}
+
+
+// On mouse entering a row
+function enterRow() {
+  if (selectedRow !== this) {
+    this.style.background = getComputedStyle(this).getPropertyValue("--row-hover-color");
+  }
+}
+
+
+// On mouse leaving a row
+function leaveRow() {
+  if (selectedRow !== this) {
+    this.style.background = "";
+  }
+}
+
+
+
+
+/* checkFile checks the chosen file to be uploaded
+Displays file status if the check is failed
+Enables the upload button if the check is passed */
+function checkFile(file, fileStatus, uploadButton) {
+  if (doNotCheck.includes(file.name)) {
+    uploadButton.disabled = false;
+    return;
+  }
+
+  if (!file.name.endsWith(".jed")) {
+    fileStatus.innerHTML = "File format must be JEDEC (.jed)";
+    return;
+  }
+
+  if (file.name.length > 30) {
+    fileStatus.innerHTML = "File name cannot be longer than 30 characters";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.readAsText(file);
+  reader.onload = function() {
+    const file = reader.result;
+    var i = 0;
+
+    // Look for STX
+    while (file.charCodeAt(i) != 2 && !isNaN(file.charCodeAt(i))) {
+      i++;
+    }
+    // If STX is not found
+    if (i >= file.length) {
+      fileStatus.innerHTML = "File check failed: could not find starting STX";
+      return;
+    }
+    const stx = i;
+
+    // Look for QF
+    while ((file.charCodeAt(i - 3) != 10 || file.charCodeAt(i - 2) != 81 || file.charCodeAt(i - 1) != 70) && !isNaN(file.charCodeAt(i))) {
+      i++;
+    }
+    if (i >= file.length) {
+      fileStatus.innerHTML = "File check failed: could not find 'Q' and qualifier 'F'";
+      return;
+    }
+
+    // Count address digits
+    var addressDigits = 0;
+    while (file.charCodeAt(i) != 42) {
+      addressDigits++;
+      i++;
+    }
+
+    i++;
+    // Check that we're not at the end of the file
+    if (isNaN(file.charCodeAt(i))) {
+      fileStatus.innerHTML = "File check failed: address delimiter is at end of file";
+      return;
+    }
+
+    // Look for 'E' for feature row
+    while ((file.charCodeAt(i - 2) != 10 || file.charCodeAt(i - 1) != 69) && !isNaN(file.charCodeAt(i))) {
+      i++;
+    }
+    if (i >= file.length) {
+      fileStatus.innerHTML = "File check failed: could not find 'E' for feature row";
+      return;
+    }
+
+    var featurerow = 0; // feature row bit position
+    while (file.charCodeAt(i) == 48 || file.charCodeAt(i) == 49) {
+      featurerow++;
+      i++;
+    }
+    if (featurerow != 64) {
+      fileStatus.innerHTML = "File check failed: feature row is not 8 bytes long";
+      return;
+    }
+
+    // Go to next line
+    while (file.charCodeAt(i) != 48 && file.charCodeAt(i) != 49) {
+      i++;
+    }
+    var feabits = 0; // feabit position
+    while (file.charCodeAt(i) == 48 || file.charCodeAt(i) == 49) {
+      if (feabits == 9 && file.charCodeAt(i) == 49) {
+        fileStatus.innerHTML = "File check failed: SPI port is disabled";
+        return;
+      }
+      feabits++;
+      i++;
+    }
+    if (feabits != 16) {
+      fileStatus.innerHTML = "File check failed: feabits is not 2 bytes long";
+      return;
+    }
+
+    // Go back to STX
+    i = stx;
+
+    // Look for 'L'
+    while ((file.charCodeAt(i - 2) != 10 || file.charCodeAt(i - 1) != 76) && !isNaN(file.charCodeAt(i))) {
+      i++;
+    }
+    if (i >= file.length) {
+      fileStatus.innerHTML = "File check failed: could not find 'L' for fuse table";
+      return;
+    }
+
+    // Check that address digits are 0
+    const limit = i + addressDigits;
+    for (i; i < limit; i++) {
+      if (file.charCodeAt(i) != 48) {
+        fileStatus.innerHTML = "File check failed: fuse table address is not 0";
+        return;
+      }
+    }
+
+    // File check successful
+    if (uploadButton.value !== "Uploading...") {
+      uploadButton.disabled = false;
+    }
+  }
+}
+
+function chooseFile() {
+  JEDECfile.click();
 }
